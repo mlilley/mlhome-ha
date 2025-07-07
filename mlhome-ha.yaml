@@ -1,0 +1,90 @@
+services:
+
+  nodered:
+    image: nodered/node-red:4.0.9
+    ports:
+      - 1880:1880
+    environment:
+      - TZ=Australia/Melbourne
+    volumes:
+      - /mnt/tank/apps/mlhome-ha/nodered/data:/data
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+      - timescaledb
+      - homeassistant
+    networks:
+      macvlan1:
+        ipv4_address: 192.168.1.33
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:2025.7.1
+    ports: 
+      - 8123:8123
+    volumes:
+      - /mnt/tank/apps/mlhome-ha/homeassistant/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    privileged: false
+    restart: unless-stopped
+    depends_on: 
+      - mosquitto
+      - timescaledb
+      - zigbee2mqtt
+    networks:
+      macvlan1:
+        ipv4_address: 192.168.1.34
+
+  zigbee2mqtt:
+    image: koenkk/zigbee2mqtt:2.5.1
+    ports: 
+      - 8080:8080
+    environment:
+      - TZ=Australia/Melbourne
+    volumes:
+      - /mnt/tank/apps/mlhome-ha/zigbee2mqtt/data:/app/data
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    networks:
+      macvlan1:
+        ipv4_address: 192.168.1.35
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.21-openssl
+    ports: 
+      - 1883:1883
+    volumes:
+      - /mnt/tank/apps/mlhome-ha/mosquitto/config:/mosquitto/config
+      - /mnt/tank/apps/mlhome-ha/mosquitto/data:/mosquitto/data
+      - /mnt/tank/apps/mlhome-ha/mosquitto/logs:/mosquitto/logs
+    restart: unless-stopped
+    networks:
+      macvlan1:
+        ipv4_address: 192.168.1.36
+
+  timescaledb:
+    image: timescale/timescaledb:2.20.3-pg17
+    ports: 
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=fixme
+    volumes:
+      - /mnt/tank/apps/mlhome-ha/timescaledb/data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      macvlan1:
+        ipv4_address: 192.168.1.37
+
+networks:
+  macvlan1:
+    driver: macvlan
+    driver_opts:
+      parent: enp116s0
+    ipam:
+      config:
+        - subnet: 192.168.1.0/24
+          gateway: 192.168.1.1
+          ip_range: 192.168.1.32/28 # 16 ips, 
+                                    # from 192.168.1.32 to 192.168.1.48 
+                                    # except .32 (network) and .47 (broadcast)
