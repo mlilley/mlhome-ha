@@ -4,7 +4,7 @@ Home automation services docker compose configuration.
 
 Uses a docker macvlan network to put each service on its own IP within the LAN.
 
-> Using TrueNAS as host with a static ip, that ip must be defined on the physical interface, not a bridge interface that may or may not be difined.
+> Using TrueNAS as host with a static ip, that ip must be defined on the physical interface, not a bridge interface that may or may not be defined.
 
 ## Host Conntainer Reachability
 
