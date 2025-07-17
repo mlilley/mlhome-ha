@@ -76,6 +76,17 @@ services:
       macvlan1:
         ipv4_address: 192.168.1.37
 
+  mqttexplorer:
+    image: smeagolworms4/mqtt-explorer
+    ports: 
+      - 4000:4000
+    volumes:
+      - /mnt/tank/apps/mlhome-ha/mqtt-explorer/config:/mqtt-explorer/config
+    restart: unless-stopped
+    networks:
+      macvlan1:
+        ipv4_address: 192.168.1.38
+
 networks:
   macvlan1:
     driver: macvlan
