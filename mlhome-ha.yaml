@@ -1,28 +1,11 @@
 services:
 
-  nodered:
-    image: nodered/node-red:4.0.9
-    ports:
-      - 1880:1880
-    environment:
-      - TZ=Australia/Melbourne
-    volumes:
-      - /mnt/tank/apps/mlhome-ha/nodered/data:/data
-    restart: unless-stopped
-    depends_on:
-      - mosquitto
-      - timescaledb
-      - homeassistant
-    networks:
-      macvlan1:
-        ipv4_address: 192.168.1.33
-
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:2025.7.1
     ports: 
       - 8123:8123
     volumes:
-      - /mnt/tank/apps/mlhome-ha/homeassistant/config:/config
+      - ${HOMEASSISTANT_VOL_CONFIG}:/config
       - /etc/localtime:/etc/localtime:ro
     privileged: false
     restart: unless-stopped
@@ -32,70 +15,101 @@ services:
       - zigbee2mqtt
     networks:
       macvlan1:
-        ipv4_address: 192.168.1.34
+        ipv4_address: ${HOMEASSISTANT_IP}
 
   zigbee2mqtt:
     image: koenkk/zigbee2mqtt:2.5.1
     ports: 
       - 8080:8080
     environment:
-      - TZ=Australia/Melbourne
+      - TZ=${TZ}
     volumes:
-      - /mnt/tank/apps/mlhome-ha/zigbee2mqtt/data:/app/data
+      - ${ZIGBEE2MQTT_VOL_DATA}:/app/data
     restart: unless-stopped
     depends_on:
       - mosquitto
     networks:
       macvlan1:
-        ipv4_address: 192.168.1.35
+        ipv4_address: ${ZIGBEE2MQTT_IP}
 
   mosquitto:
     image: eclipse-mosquitto:2.0.21-openssl
     ports: 
       - 1883:1883
     volumes:
-      - /mnt/tank/apps/mlhome-ha/mosquitto/config:/mosquitto/config
-      - /mnt/tank/apps/mlhome-ha/mosquitto/data:/mosquitto/data
-      - /mnt/tank/apps/mlhome-ha/mosquitto/logs:/mosquitto/logs
+      - ${MOSQUITTO_VOL_CONFIG}:/mosquitto/config
+      - ${MOSQUITTO_VOL_DATA}:/mosquitto/data
+      - ${MOSQUITTO_VOL_LOGS}:/mosquitto/logs
     restart: unless-stopped
     networks:
       macvlan1:
-        ipv4_address: 192.168.1.36
+        ipv4_address: ${MOSQUITTO_IP}
 
   timescaledb:
     image: timescale/timescaledb:2.20.3-pg17
     ports: 
       - 5432:5432
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=fixme
+      - POSTGRES_USER=${TIMESCALEDB_USER}
+      - POSTGRES_PASSWORD=${TIMESCALEDB_PASS}
     volumes:
-      - /mnt/tank/apps/mlhome-ha/timescaledb/data:/var/lib/postgresql/data
+      - ${TIMESCALEDB_VOL_DATA}:/var/lib/postgresql/data
     restart: unless-stopped
     networks:
       macvlan1:
-        ipv4_address: 192.168.1.37
+        ipv4_address: ${TIMESCALEDB_IP}
+
+  appdaemon:
+    image: acockburn/appdaemon:latest
+    ports:
+      - 5050:5050
+    environment:
+      - HA_URL=${APPDAEMON_HA_URL}
+      - TOKEN=${APPDAEMON_TOKEN}
+      - DASH_URL=${APPDAEMON_DASH_URL}
+    volumes:
+      - ${APPDAEMON_VOL_CONF}:/conf
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    networks:
+      macvlan1:
+        ipv4_address: ${APPDAEMON_IP}
 
   mqttexplorer:
     image: smeagolworms4/mqtt-explorer
     ports: 
       - 4000:4000
     volumes:
-      - /mnt/tank/apps/mlhome-ha/mqtt-explorer/config:/mqtt-explorer/config
+      - ${MQTTEXPLORER_VOL_CONFIG}:/mqtt-explorer/config
     restart: unless-stopped
     networks:
       macvlan1:
-        ipv4_address: 192.168.1.38
+        ipv4_address: ${MQTTEXPLORER_IP}
+
+  nodered:
+    image: nodered/node-red:4.0.9
+    ports:
+      - 1880:1880
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${NODERED_VOL_DATA}:/data
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+      - timescaledb
+      - homeassistant
+    networks:
+      macvlan1:
+        ipv4_address: ${NODERED_IP}
 
 networks:
   macvlan1:
     driver: macvlan
     driver_opts:
-      parent: enp116s0
+      parent: ${HOST_NET_INTERFACE}
     ipam:
       config:
-        - subnet: 192.168.1.0/24
-          gateway: 192.168.1.1
-          ip_range: 192.168.1.32/28 # 16 ips, 
-                                    # from 192.168.1.32 to 192.168.1.48 
-                                    # except .32 (network) and .47 (broadcast)
+        - subnet: ${HOST_NET_SUBNET}
+          gateway: ${HOST_NET_GATEWAY}
+          ip_range: ${HOST_NET_IPRANGE}
