@@ -16,7 +16,13 @@ services:
     networks:
       macvlan1:
         ipv4_address: ${HOMEASSISTANT_IP}
-
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+        reservations: 
+          memory: 500m
+          
   zigbee2mqtt:
     image: koenkk/zigbee2mqtt:2.5.1
     ports: 
@@ -31,6 +37,12 @@ services:
     networks:
       macvlan1:
         ipv4_address: ${ZIGBEE2MQTT_IP}
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+        reservations: 
+          memory: 250m
 
   mosquitto:
     image: eclipse-mosquitto:2.0.21-openssl
@@ -44,6 +56,12 @@ services:
     networks:
       macvlan1:
         ipv4_address: ${MOSQUITTO_IP}
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+        reservations: 
+          memory: 250m
 
   timescaledb:
     image: timescale/timescaledb:2.20.3-pg17
@@ -58,22 +76,28 @@ services:
     networks:
       macvlan1:
         ipv4_address: ${TIMESCALEDB_IP}
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+        reservations: 
+          memory: 2g
 
-  appdaemon:
-    image: acockburn/appdaemon:latest
-    ports:
-      - 5050:5050
-    environment:
-      - HA_URL=${APPDAEMON_HA_URL}
-      - TOKEN=${APPDAEMON_TOKEN}
-      - DASH_URL=${APPDAEMON_DASH_URL}
-    volumes:
-      - ${APPDAEMON_VOL_CONF}:/conf
-      - /etc/localtime:/etc/localtime:ro
-    restart: unless-stopped
-    networks:
-      macvlan1:
-        ipv4_address: ${APPDAEMON_IP}
+  # appdaemon:
+  #   image: acockburn/appdaemon:latest
+  #   ports:
+  #     - 5050:5050
+  #   environment:
+  #     - HA_URL=${APPDAEMON_HA_URL}
+  #     - TOKEN=${APPDAEMON_TOKEN}
+  #     - DASH_URL=${APPDAEMON_DASH_URL}
+  #   volumes:
+  #     - ${APPDAEMON_VOL_CONF}:/conf
+  #     - /etc/localtime:/etc/localtime:ro
+  #   restart: unless-stopped
+  #   networks:
+  #     macvlan1:
+  #       ipv4_address: ${APPDAEMON_IP}
 
   mqttexplorer:
     image: smeagolworms4/mqtt-explorer
@@ -85,23 +109,29 @@ services:
     networks:
       macvlan1:
         ipv4_address: ${MQTTEXPLORER_IP}
+    deploy:
+      resources:
+        limits:
+          memory: 250m
+        reservations: 
+          memory: 125m
 
-  nodered:
-    image: nodered/node-red:4.0.9
-    ports:
-      - 1880:1880
-    environment:
-      - TZ=${TZ}
-    volumes:
-      - ${NODERED_VOL_DATA}:/data
-    restart: unless-stopped
-    depends_on:
-      - mosquitto
-      - timescaledb
-      - homeassistant
-    networks:
-      macvlan1:
-        ipv4_address: ${NODERED_IP}
+  # nodered:
+  #   image: nodered/node-red:4.0.9
+  #   ports:
+  #     - 1880:1880
+  #   environment:
+  #     - TZ=${TZ}
+  #   volumes:
+  #     - ${NODERED_VOL_DATA}:/data
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - mosquitto
+  #     - timescaledb
+  #     - homeassistant
+  #   networks:
+  #     macvlan1:
+  #       ipv4_address: ${NODERED_IP}
 
 networks:
   macvlan1:
