@@ -1,12 +1,18 @@
 # mlhome-ha
 
-Home automation services docker compose configuration.
+Home Assistant docker compose stack.
 
 ## Usage
 
-1. Copy the provided .env.example to .env and fill it out.
-2. Create the volume directories you specified in the .env.
-3. Start it up:
+1. Copy the provided `.env.example` to `.env` and update it.
+2. Copy the provided `configuration.yaml.example` to `configuration.yaml` in `volumes/zigbee2mqtt/data/` and update it.
+3. Start the stack:
    ```
-   $ docker compose up -d --env-file .env -f mlhome-ha.yaml
+   sudo make up
+   ```
+4. Create desired mosquitto users:
+   ```
+   sudo make passwd USERNAME=ha     # for HomeAssistant
+   sudo make passwd USERNAME=z2m    # for zigbee2mqtt
+   ...
    ```

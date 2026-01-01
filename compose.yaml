@@ -14,7 +14,6 @@ services:
     restart: unless-stopped
     depends_on: 
       - mosquitto
-      - timescaledb
       - zigbee2mqtt
     deploy:
       resources:
@@ -43,7 +42,7 @@ services:
 
   mosquitto:
     image: eclipse-mosquitto:2.0.22-openssl
-    ports: 
+    ports:
       - 1883:1883
     volumes:
       - ${MOSQUITTO_VOL_CONFIG}:/mosquitto/config
