@@ -17,8 +17,14 @@ passwd:
 	  echo "Usage: make passwd USERNAME=abc"; \
 	  exit 1; \
 	fi
-	docker compose run mosquitto \
-	  chmod 0600 /mosquitto/config/mosquitto.passwd
-	docker compose run mosquitto \
-	  mosquitto_passwd -c /mosquitto/config/mosquitto.passwd $(USERNAME)
+	docker compose run --rm mosquitto \
+	  sh -c '\
+	    if [ ! -f /mosquitto/config/mosquitto.passwd ]; then \
+		  mosquitto_passwd -c /mosquitto/config/mosquitto.passwd "$(USERNAME)"; \
+		else \
+		  mosquitto_passwd /mosquitto/config/mosquitto.passwd "$(USERNAME)"; \
+		fi && \
+		chmod 0600 /mosquitto/config/mosquitto.passwd && \
+		chown root:root /mosquitto/config/mosquitto.passwd \
+	  '
 	docker compose restart mosquitto
